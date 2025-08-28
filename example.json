@@ -1,0 +1,94 @@
+{
+  "candles": [
+    {
+      "timestamp": 1724841000,
+      "open": 100,
+      "high": 110,
+      "low": 98,
+      "close": 108,
+      "volume": 1200
+    },
+    {
+      "timestamp": 1724841300,
+      "open": 108,
+      "high": 115,
+      "low": 107,
+      "close": 112,
+      "volume": 1400
+    },
+    {
+      "timestamp": 1724841600,
+      "open": 112,
+      "high": 116,
+      "low": 109,
+      "close": 114,
+      "volume": 1350
+    },
+    {
+      "timestamp": 1724841900,
+      "open": 114,
+      "high": 117,
+      "low": 113,
+      "close": 115,
+      "volume": 1500
+    },
+    {
+      "timestamp": 1724842200,
+      "open": 115,
+      "high": 118,
+      "low": 112,
+      "close": 113,
+      "volume": 1800
+    },
+    {
+      "timestamp": 1724842500,
+      "open": 113,
+      "high": 114,
+      "low": 108,
+      "close": 110,
+      "volume": 2100
+    },
+    {
+      "timestamp": 1724842800,
+      "open": 110,
+      "high": 112,
+      "low": 105,
+      "close": 106,
+      "volume": 2000
+    },
+    {
+      "timestamp": 1724843100,
+      "open": 106,
+      "high": 110,
+      "low": 104,
+      "close": 109,
+      "volume": 1900
+    },
+    {
+      "timestamp": 1724843400,
+      "open": 109,
+      "high": 113,
+      "low": 107,
+      "close": 112,
+      "volume": 1950
+    },
+    {
+      "timestamp": 1724843700,
+      "open": 112,
+      "high": 116,
+      "low": 111,
+      "close": 115,
+      "volume": 2200
+    }
+  ],
+  "params": {
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "rsi_period": 14,
+    "atr_period": 14,
+    "atr_tp_mult": 2.0,
+    "atr_sl_mult": 1.0,
+    "require_rsi_filter": false,
+    "min_volume": 0
+  }
+}
