@@ -76,7 +76,7 @@ class StrategyParams(BaseModel):
     analog_min_score: int = 4  # similaridade mínima de estados técnicos (0-8)
 
 class FutureSignal(BaseModel):
-    signal: Literal["BUY", "SELL"]
+    signal: str
     timestamp: int
     iso_time: str
     confidence: float
