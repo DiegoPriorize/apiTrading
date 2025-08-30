@@ -1,108 +1,222 @@
 
-# Trade Signal API
+# **Trade Signal API**
 
-A **Trade Signal API** é uma aplicação que gera sinais de compra, venda e manutenção para ativos financeiros com base em candles OHLCV (Open, High, Low, Close, Volume). A API utiliza uma combinação de médias móveis exponenciais (EMA), índice de força relativa (RSI), média de verdade (ATR), entre outros indicadores técnicos para gerar esses sinais.
+A **Trade Signal API** é uma API que gera sinais de compra, venda ou manutenção (HOLD) para ativos financeiros com base em candles OHLCV (Open, High, Low, Close, Volume). A API usa uma combinação de indicadores técnicos como **EMA**, **RSI**, **ATR**, entre outros, para gerar esses sinais.
 
-## Estratégias e Indicadores Usados
+Este **README** fornece informações detalhadas sobre como instalar, configurar, utilizar a API e entender os parâmetros de configuração para diferentes perfis de investidor.
 
-A API usa uma combinação de indicadores técnicos para gerar sinais de compra, venda ou manutenção:
+---
 
-### 1. **EMA (Exponential Moving Average)**
-   - **Descrição**: A EMA é uma média móvel ponderada que dá mais peso aos preços mais recentes. Utilizada para identificar a direção da tendência e possíveis reversões.
-   - **Estratégia**: O sinal de compra é gerado quando a EMA de curto prazo (rápida) cruza para cima a EMA de longo prazo (lenta), indicando um possível movimento de alta. O sinal de venda ocorre quando a EMA rápida cruza para baixo a EMA lenta, indicando um possível movimento de baixa.
+## **Instalação**
 
-### 2. **RSI (Relative Strength Index)**
-   - **Descrição**: O RSI mede a força e a velocidade de um movimento de preços. Variando de 0 a 100, valores acima de 70 indicam que o ativo está sobrecomprado (potencial venda), e valores abaixo de 30 indicam que está sobrevendido (potencial compra).
-   - **Estratégia**: A estratégia utiliza o RSI para filtrar sinais de compra e venda. Quando o RSI está acima de 70, a compra é evitada, e quando está abaixo de 30, a venda é evitada.
+### **Passo 1: Clonar o Repositório**
 
-### 3. **ATR (Average True Range)**
-   - **Descrição**: O ATR mede a volatilidade do mercado, calculando a média do intervalo verdadeiro (True Range) de preços durante um período.
-   - **Estratégia**: Usado para calcular os níveis de **Stop Loss** (SL) e **Take Profit** (TP). O ATR é multiplicado por fatores definidos para definir essas distâncias em relação ao preço de entrada.
+Se você ainda não tem o repositório clonado, clone-o para o seu ambiente local:
 
-### 4. **Perfis de Investidor**:
-   A aplicação oferece diferentes configurações de parâmetros para diferentes perfis de investidores. Cada perfil usa valores diferentes para os parâmetros da estratégia, ajustando o risco e a volatilidade:
+```bash
+git clone https://github.com/seu-usuario/trade-signal-api.git
+cd trade-signal-api
+```
 
-   - **Conservador**: Foca em proteção e baixo risco. Gera sinais mais estáveis e evita movimentos agressivos.
-   - **Balanceado**: Mistura proteção com busca por retorno. Aceita um pouco mais de risco, mas ainda tem um controle razoável.
-   - **Agressivo**: Foca em maximizar os retornos, aceitando maior volatilidade e risco. Esse perfil gera sinais mais rápidos e com maior chance de lucro, mas também pode resultar em perdas maiores.
+### **Passo 2: Instalar Dependências**
 
-## Parâmetros da Estratégia
+Com o repositório clonado, instale as dependências do projeto. Você pode fazer isso utilizando `pip`:
 
-### 1. **`ema_fast` (9)**:
-   - **Descrição**: Período da EMA rápida. Um valor menor faz a média reagir mais rápido aos movimentos do mercado.
-   - **Exemplo**: Um valor de **9** significa que a média será calculada considerando os últimos 9 períodos.
+```bash
+pip install -r requirements.txt
+```
+
+### **Passo 3: Rodando a API Localmente**
+
+Após instalar as dependências, você pode rodar a API localmente utilizando o **Uvicorn**:
+
+```bash
+uvicorn main:app --reload
+```
+
+A API estará disponível em `http://localhost:8000`.
+
+---
+
+## **Dependências**
+
+O arquivo `requirements.txt` contém todas as dependências necessárias para rodar a API:
+
+```text
+fastapi==0.95.2
+pydantic==1.10.7
+uvicorn==0.22.0
+```
+
+- **FastAPI**: Framework para construir a API.
+- **Pydantic**: Para validação de dados de entrada e saída.
+- **Uvicorn**: Servidor ASGI para executar a aplicação FastAPI.
+
+---
+
+## **Como Usar com Docker**
+
+1. **Criação da Imagem Docker**
+
+   No terminal, navegue até o diretório onde o `Dockerfile` está localizado e execute o seguinte comando para criar a imagem Docker:
+
+   ```bash
+   docker build -t trade-signal-api .
+   ```
+
+2. **Executando o Docker**
+
+   Após a criação da imagem, execute o container com o seguinte comando:
+
+   ```bash
+   docker run -d -p 8000:8000 trade-signal-api
+   ```
+
+A API estará disponível em `http://localhost:8000`.
+
+---
+
+## **Exemplo de Uso**
+
+### **Formato de Entrada**
+
+A API recebe os dados no formato JSON, como mostrado abaixo. Isso inclui os **timestamps** (T), preços de **abertura (O)**, **fechamento (C)**, **máximas (H)**, **mínimas (I)** e **volume (V)**, seguidos dos parâmetros de estratégia.
+
+```json
+{
+  "T": [1622494800, 1622495100, 1622495400, 1622495700, 1622496000],
+  "O": ["100.50", "101.00", "100.80", "101.20", "101.50"],
+  "C": ["101.00", "100.90", "101.10", "101.30", "101.00"],
+  "H": ["101.50", "101.30", "101.20", "101.40", "101.60"],
+  "I": ["100.40", "100.60", "100.50", "100.70", "100.90"],
+  "V": ["1200", "1500", "1400", "1300", "1250"],
+  "params": {
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "rsi_period": 14,
+    "rsi_buy": 30.0,
+    "rsi_sell": 70.0,
+    "atr_period": 14,
+    "atr_tp_mult": 2.0,
+    "atr_sl_mult": 1.0,
+    "min_volume": 0.0,
+    "require_rsi_filter": false
+  }
+}
+```
+
+### **Formato de Saída**
+
+A API retorna uma resposta em JSON, com o sinal de **compra (BUY)**, **venda (SELL)** ou **manutenção (HOLD)**, incluindo o **timestamp**, o **preço** de fechamento, **razão** e os valores de **take_profit** e **stop_loss**, caso aplicável.
+
+Exemplo de resposta:
+
+```json
+{
+  "signal": "BUY",
+  "timestamp": 1622496000,
+  "iso_time": "2021-05-31T12:00:00Z",
+  "price": 101.00,
+  "reason": "EMA9 cruzou acima da EMA21.",
+  "take_profit": 103.00,
+  "stop_loss": 99.00,
+  "precision": 90.0
+}
+```
+
+---
+
+## **Como Usar no FlutterFlow**
+
+Para utilizar esta API no **FlutterFlow**, siga os passos abaixo:
+
+1. **Criar um Novo Recurso de API no FlutterFlow:**
+   - Acesse a seção "API Calls" do FlutterFlow.
+   - Crie um novo recurso de API com o método **POST** para o endpoint `/signal`.
+   - Insira a URL do seu servidor (se estiver usando localmente, pode usar `http://localhost:8000/signal`).
+
+2. **Configuração do Corpo da Requisição:**
+   - No FlutterFlow, configure os parâmetros da requisição com o formato JSON conforme mostrado acima (com **T**, **O**, **C**, **H**, **I**, **V** e **params**).
+
+3. **Lidar com a Resposta:**
+   - Após a chamada, você pode manipular a resposta JSON no FlutterFlow para exibir o **sinal**, **preço**, **take profit**, **stop loss**, etc., de acordo com a lógica do seu app.
+
+---
+
+## **Estratégias de Trading Usadas**
+
+A API utiliza várias **estratégias de trading** para gerar sinais com base em diferentes indicadores técnicos. As principais estratégias são:
+
+1. **Cruzamento de EMAs**:
+   - A **EMA rápida** (curto prazo) cruza acima da **EMA lenta** (longo prazo) gerando um sinal de **compra (BUY)**.
+   - Quando a **EMA rápida** cruza abaixo da **EMA lenta**, um sinal de **venda (SELL)** é gerado.
+
+2. **Filtro de RSI**:
+   - O **RSI** (índice de força relativa) é utilizado para filtrar sinais. Se o RSI for superior a um valor de sobrecompra (ex: 70), o sinal de **compra** é evitado. Se for inferior a um valor de sobrevenda (ex: 30), o sinal de **venda** é evitado.
+
+3. **ATR para Stop Loss e Take Profit**:
+   - O **ATR** (média de intervalo verdadeiro) é utilizado para calcular a volatilidade do mercado. A distância do **Stop Loss (SL)** e **Take Profit (TP)** é ajustada com base no valor do ATR.
+
+---
+
+## **Descrição Detalhada dos Parâmetros**
+
+### **`ema_fast` (9)**
+   - **Descrição**: Período da **EMA rápida** (curto prazo).
+   - **Quanto menor, mais sensível será a média.**
+   - **Exemplo**: `ema_fast = 5` para um comportamento mais sensível.
    - **Exemplo de Uso**:
      - **Conservador**: `ema_fast = 9`
      - **Agressivo**: `ema_fast = 5`
 
-### 2. **`ema_slow` (21)**:
-   - **Descrição**: Período da EMA lenta. Um valor maior faz a média reagir de maneira mais suave, filtrando mais os sinais.
-   - **Exemplo**: Um valor de **21** significa que a média será calculada considerando os últimos 21 períodos.
+### **`ema_slow` (21)**
+   - **Descrição**: Período da **EMA lenta** (longo prazo).
+   - **Quanto maior, mais suavizada será a média.**
+   - **Exemplo**: `ema_slow = 50` para um comportamento mais suave.
    - **Exemplo de Uso**:
      - **Conservador**: `ema_slow = 30`
      - **Agressivo**: `ema_slow = 15`
 
-### 3. **`rsi_period` (14)**:
-   - **Descrição**: Período para o cálculo do RSI, que ajuda a identificar condições de sobrecompra ou sobrevenda no ativo.
-   - **Exemplo**: Um valor de **14** significa que o RSI será calculado com base nos últimos 14 candles.
+### **`rsi_period` (14)**
+   - **Descrição**: Período do cálculo do **RSI**.
+   - **Quanto maior o valor, mais suavizado será o RSI.**
+   - **Exemplo**: `rsi_period = 10` para uma resposta mais rápida.
    - **Exemplo de Uso**:
-     - **Balanceado**: `rsi_period = 14`
+     - **Conservador**: `rsi_period = 20`
      - **Agressivo**: `rsi_period = 10`
 
-### 4. **`rsi_buy` (30.0)**:
-   - **Descrição**: Valor abaixo do qual um ativo é considerado sobrevendido e um sinal de compra pode ser gerado.
-   - **Exemplo**: Um valor de **30** significa que se o RSI estiver abaixo de 30, o ativo está sobrevendido e um sinal de compra pode ser gerado.
+### **`rsi_buy` (30.0)**
+   - **Descrição**: Valor abaixo do qual o ativo é considerado sobrevendido e um sinal de **compra** pode ser gerado.
+   - **Exemplo**: `rsi_buy = 25.0` para uma compra mais agressiva.
    - **Exemplo de Uso**:
      - **Conservador**: `rsi_buy = 40.0`
      - **Agressivo**: `rsi_buy = 25.0`
 
-### 5. **`rsi_sell` (70.0)**:
-   - **Descrição**: Valor acima do qual um ativo é considerado sobrecomprado e um sinal de venda pode ser gerado.
-   - **Exemplo**: Um valor de **70** significa que se o RSI estiver acima de 70, o ativo está sobrecomprado e um sinal de venda pode ser gerado.
+### **`rsi_sell` (70.0)**
+   - **Descrição**: Valor do RSI acima do qual o ativo é considerado sobrecomprado e um sinal de **venda** pode ser gerado.
+   - **Exemplo**: `rsi_sell = 75.0` para evitar compras quando o mercado está muito forte.
    - **Exemplo de Uso**:
      - **Conservador**: `rsi_sell = 65.0`
      - **Agressivo**: `rsi_sell = 75.0`
 
-### 6. **`atr_period` (14)**:
-   - **Descrição**: Período utilizado para o cálculo do ATR, que ajuda a definir a volatilidade do mercado e ajustar o Stop Loss (SL) e Take Profit (TP).
-   - **Exemplo**: Um valor de **14** significa que o ATR será calculado com base nos últimos 14 candles.
+### **`atr_period` (14)**
+   - **Descrição**: Período do cálculo do **ATR**.
+   - **Quanto maior, mais longo o histórico usado para calcular a volatilidade.**
+   - **Exemplo**: `atr_period = 10` para uma resposta mais rápida.
    - **Exemplo de Uso**:
-     - **Balanceado**: `atr_period = 14`
+     - **Conservador**: `atr_period = 20`
      - **Agressivo**: `atr_period = 10`
 
-### 7. **`atr_tp_mult` (2.0)**:
-   - **Descrição**: Multiplicador utilizado para definir o Take Profit (TP) com base no ATR. Esse valor define o quanto de distância em relação ao preço de entrada o Take Profit estará.
-   - **Exemplo**: Um valor de **2.0** significa que o Take Profit estará a 2 vezes o valor do ATR do preço de entrada.
+### **`atr_tp_mult` (2.0)**
+   - **Descrição**: Multiplicador para definir o **Take Profit (TP)** baseado no ATR.
+   - **Exemplo**: `atr_tp_mult = 3.0` para um TP mais distante, aumentando o risco.
    - **Exemplo de Uso**:
      - **Conservador**: `atr_tp_mult = 1.5`
      - **Agressivo**: `atr_tp_mult = 3.0`
 
-### 8. **`atr_sl_mult` (1.0)**:
-   - **Descrição**: Multiplicador utilizado para definir o Stop Loss (SL) com base no ATR. Esse valor define o quanto de distância em relação ao preço de entrada o Stop Loss estará.
-   - **Exemplo**: Um valor de **1.0** significa que o Stop Loss estará a 1 vez o valor do ATR do preço de entrada.
+### **`atr_sl_mult` (1.0)**
+   - **Descrição**: Multiplicador para definir o **Stop Loss (SL)** baseado no ATR.
+   - **Exemplo**: `atr_sl_mult = 0.5` para um SL mais próximo, diminuindo o risco.
    - **Exemplo de Uso**:
-     - **Balanceado**: `atr_sl_mult = 1.0`
+     - **Conservador**: `atr_sl_mult = 1.0`
      - **Agressivo**: `atr_sl_mult = 0.5`
-
-### 9. **`min_volume` (0.0)**:
-   - **Descrição**: Volume mínimo necessário para que o sinal de compra ou venda seja gerado. Se o volume do candle for abaixo deste valor, o sinal será **HOLD**.
-   - **Exemplo**: Um valor de **0.0** significa que não há restrição de volume.
-   - **Exemplo de Uso**:
-     - **Conservador**: `min_volume = 2000`
-     - **Agressivo**: `min_volume = 100`
-
-### 10. **`require_rsi_filter` (false)**:
-   - **Descrição**: Indica se o filtro do RSI deve ser aplicado. Se for **True**, o sinal de compra/venda será filtrado com base nos valores de **rsi_buy** e **rsi_sell**.
-   - **Exemplo**: Se for **True**, aplica o filtro RSI; se for **False**, o filtro não é aplicado.
-   - **Exemplo de Uso**:
-     - **Balanceado**: `require_rsi_filter = true`
-     - **Agressivo**: `require_rsi_filter = false`
-
-## Como Usar
-
-### Executando Localmente
-
-1. Instale as dependências:
-
-   ```bash
-   pip install -r requirements.txt
