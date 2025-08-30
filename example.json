@@ -15,24 +15,6 @@
     "atr_tp_mult": 2.0,
     "atr_sl_mult": 1.0,
     "min_volume": 0.0,
-    "require_rsi_filter": false,
-    "macd_fast": 12,
-    "macd_slow": 26,
-    "macd_signal": 9,
-    "bb_period": 20,
-    "bb_std_mult": 2.0,
-    "stoch_k": 14,
-    "stoch_d": 3,
-    "stoch_smooth_k": 3,
-    "cci_period": 20,
-    "adx_period": 14,
-    "adx_threshold": 25.0,
-    "psar_step": 0.02,
-    "psar_max": 0.2,
-    "min_confirmations": 2,
-    "eval_max_bars": 30,
-    "future_horizon_bars": 20,
-    "future_top_k": 5,
-    "analog_min_score": 4
+    "require_rsi_filter": false
   }
 }
