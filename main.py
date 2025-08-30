@@ -81,8 +81,14 @@ class FutureSignal(BaseModel):
     iso_time: str
     confidence: float
 
+@validator("signal")
+    def validate_signal(cls, v):
+        if v not in ["BUY", "SELL"]:
+            raise ValueError("O valor de 'signal' deve ser 'BUY' ou 'SELL'.")
+        return v
+
 class SignalResponse(BaseModel):
-    signal: Literal["BUY", "SELL", "HOLD"]
+    signal: str
     timestamp: int
     iso_time: str
     price: float
@@ -93,6 +99,12 @@ class SignalResponse(BaseModel):
     future_signals: Optional[List[FutureSignal]] = None
     precision_buy: Optional[float] = None  # % de acerto (histórico/estimado)
     precision_sell: Optional[float] = None
+
+@validator("signal")
+    def validate_signal(cls, v):
+        if v not in ["BUY", "SELL", "HOLD"]:
+            raise ValueError("O valor de 'signal' deve ser 'BUY', 'SELL' ou 'HOLD'.")
+        return v
 
 class BacktestResponse(BaseModel):
     signals: List[SignalResponse]
