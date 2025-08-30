@@ -1,215 +1,108 @@
 
 # Trade Signal API
 
-A **Trade Signal API** é uma aplicação FastAPI que gera sinais de BUY, SELL ou HOLD baseados em análises de candles OHLCV (Open, High, Low, Close, Volume). Utiliza indicadores técnicos como **EMA**, **RSI**, **MACD**, **Bollinger Bands**, **Stochastic Oscillator**, **CCI**, **ADX**, e **Parabolic SAR**. Além disso, fornece sugestões de **Take Profit (TP)** e **Stop Loss (SL)** com base na **ATR (Average True Range)**, estima a precisão de acerto e pode projetar sinais futuros com base em padrões históricos.
+A **Trade Signal API** é uma aplicação que gera sinais de compra, venda e manutenção para ativos financeiros com base em candles OHLCV (Open, High, Low, Close, Volume). A API utiliza uma combinação de médias móveis exponenciais (EMA), índice de força relativa (RSI), média de verdade (ATR), entre outros indicadores técnicos para gerar esses sinais.
 
-## Índice
+## Estratégias e Indicadores Usados
 
-- [Configuração](#configuração)
-- [Uso](#uso)
-- [Estratégia](#estratégia)
-- [Perfis de Estratégia](#perfis-de-estratégia)
-- [Explicação dos Parâmetros](#explicação-dos-parâmetros)
-- [Dockerfile](#dockerfile)
-- [Exemplo de Requisição](#exemplo-de-requisição)
-- [Configuração Dependências](#configuração-dependências)
+A API usa uma combinação de indicadores técnicos para gerar sinais de compra, venda ou manutenção:
 
-## Configuração
+### 1. **EMA (Exponential Moving Average)**
+   - **Descrição**: A EMA é uma média móvel ponderada que dá mais peso aos preços mais recentes. Utilizada para identificar a direção da tendência e possíveis reversões.
+   - **Estratégia**: O sinal de compra é gerado quando a EMA de curto prazo (rápida) cruza para cima a EMA de longo prazo (lenta), indicando um possível movimento de alta. O sinal de venda ocorre quando a EMA rápida cruza para baixo a EMA lenta, indicando um possível movimento de baixa.
 
-### Dependências
+### 2. **RSI (Relative Strength Index)**
+   - **Descrição**: O RSI mede a força e a velocidade de um movimento de preços. Variando de 0 a 100, valores acima de 70 indicam que o ativo está sobrecomprado (potencial venda), e valores abaixo de 30 indicam que está sobrevendido (potencial compra).
+   - **Estratégia**: A estratégia utiliza o RSI para filtrar sinais de compra e venda. Quando o RSI está acima de 70, a compra é evitada, e quando está abaixo de 30, a venda é evitada.
 
-O projeto requer **Python 3.9+** e as seguintes dependências:
+### 3. **ATR (Average True Range)**
+   - **Descrição**: O ATR mede a volatilidade do mercado, calculando a média do intervalo verdadeiro (True Range) de preços durante um período.
+   - **Estratégia**: Usado para calcular os níveis de **Stop Loss** (SL) e **Take Profit** (TP). O ATR é multiplicado por fatores definidos para definir essas distâncias em relação ao preço de entrada.
 
-- `fastapi` — Framework web para criar APIs.
-- `uvicorn` — Servidor ASGI para executar a aplicação FastAPI.
-- `pydantic` — Biblioteca para validação de dados e modelos.
-- `numpy` — Utilizado para otimização de cálculos numéricos (opcional).
-- `matplotlib` — Para geração de gráficos de backtest (opcional).
+### 4. **Perfis de Investidor**:
+   A aplicação oferece diferentes configurações de parâmetros para diferentes perfis de investidores. Cada perfil usa valores diferentes para os parâmetros da estratégia, ajustando o risco e a volatilidade:
 
-Para instalar as dependências, use:
+   - **Conservador**: Foca em proteção e baixo risco. Gera sinais mais estáveis e evita movimentos agressivos.
+   - **Balanceado**: Mistura proteção com busca por retorno. Aceita um pouco mais de risco, mas ainda tem um controle razoável.
+   - **Agressivo**: Foca em maximizar os retornos, aceitando maior volatilidade e risco. Esse perfil gera sinais mais rápidos e com maior chance de lucro, mas também pode resultar em perdas maiores.
 
-```bash
-pip install -r requirements.txt
-```
+## Parâmetros da Estratégia
 
-### Docker
+### 1. **`ema_fast` (9)**:
+   - **Descrição**: Período da EMA rápida. Um valor menor faz a média reagir mais rápido aos movimentos do mercado.
+   - **Exemplo**: Um valor de **9** significa que a média será calculada considerando os últimos 9 períodos.
+   - **Exemplo de Uso**:
+     - **Conservador**: `ema_fast = 9`
+     - **Agressivo**: `ema_fast = 5`
 
-Se você preferir rodar a aplicação em um ambiente **Docker**, utilize o Dockerfile para criar o contêiner.
+### 2. **`ema_slow` (21)**:
+   - **Descrição**: Período da EMA lenta. Um valor maior faz a média reagir de maneira mais suave, filtrando mais os sinais.
+   - **Exemplo**: Um valor de **21** significa que a média será calculada considerando os últimos 21 períodos.
+   - **Exemplo de Uso**:
+     - **Conservador**: `ema_slow = 30`
+     - **Agressivo**: `ema_slow = 15`
 
-1. Construa a imagem Docker:
+### 3. **`rsi_period` (14)**:
+   - **Descrição**: Período para o cálculo do RSI, que ajuda a identificar condições de sobrecompra ou sobrevenda no ativo.
+   - **Exemplo**: Um valor de **14** significa que o RSI será calculado com base nos últimos 14 candles.
+   - **Exemplo de Uso**:
+     - **Balanceado**: `rsi_period = 14`
+     - **Agressivo**: `rsi_period = 10`
 
-```bash
-docker build -t trade-signal-api .
-```
+### 4. **`rsi_buy` (30.0)**:
+   - **Descrição**: Valor abaixo do qual um ativo é considerado sobrevendido e um sinal de compra pode ser gerado.
+   - **Exemplo**: Um valor de **30** significa que se o RSI estiver abaixo de 30, o ativo está sobrevendido e um sinal de compra pode ser gerado.
+   - **Exemplo de Uso**:
+     - **Conservador**: `rsi_buy = 40.0`
+     - **Agressivo**: `rsi_buy = 25.0`
 
-2. Rode o contêiner:
+### 5. **`rsi_sell` (70.0)**:
+   - **Descrição**: Valor acima do qual um ativo é considerado sobrecomprado e um sinal de venda pode ser gerado.
+   - **Exemplo**: Um valor de **70** significa que se o RSI estiver acima de 70, o ativo está sobrecomprado e um sinal de venda pode ser gerado.
+   - **Exemplo de Uso**:
+     - **Conservador**: `rsi_sell = 65.0`
+     - **Agressivo**: `rsi_sell = 75.0`
 
-```bash
-docker run -p 8000:8000 trade-signal-api
-```
+### 6. **`atr_period` (14)**:
+   - **Descrição**: Período utilizado para o cálculo do ATR, que ajuda a definir a volatilidade do mercado e ajustar o Stop Loss (SL) e Take Profit (TP).
+   - **Exemplo**: Um valor de **14** significa que o ATR será calculado com base nos últimos 14 candles.
+   - **Exemplo de Uso**:
+     - **Balanceado**: `atr_period = 14`
+     - **Agressivo**: `atr_period = 10`
 
-Isso irá expor a API na porta 8000.
+### 7. **`atr_tp_mult` (2.0)**:
+   - **Descrição**: Multiplicador utilizado para definir o Take Profit (TP) com base no ATR. Esse valor define o quanto de distância em relação ao preço de entrada o Take Profit estará.
+   - **Exemplo**: Um valor de **2.0** significa que o Take Profit estará a 2 vezes o valor do ATR do preço de entrada.
+   - **Exemplo de Uso**:
+     - **Conservador**: `atr_tp_mult = 1.5`
+     - **Agressivo**: `atr_tp_mult = 3.0`
 
-## Uso
+### 8. **`atr_sl_mult` (1.0)**:
+   - **Descrição**: Multiplicador utilizado para definir o Stop Loss (SL) com base no ATR. Esse valor define o quanto de distância em relação ao preço de entrada o Stop Loss estará.
+   - **Exemplo**: Um valor de **1.0** significa que o Stop Loss estará a 1 vez o valor do ATR do preço de entrada.
+   - **Exemplo de Uso**:
+     - **Balanceado**: `atr_sl_mult = 1.0`
+     - **Agressivo**: `atr_sl_mult = 0.5`
 
-A API é composta por dois principais endpoints:
+### 9. **`min_volume` (0.0)**:
+   - **Descrição**: Volume mínimo necessário para que o sinal de compra ou venda seja gerado. Se o volume do candle for abaixo deste valor, o sinal será **HOLD**.
+   - **Exemplo**: Um valor de **0.0** significa que não há restrição de volume.
+   - **Exemplo de Uso**:
+     - **Conservador**: `min_volume = 2000`
+     - **Agressivo**: `min_volume = 100`
 
-- `/signal`: Recebe candles OHLCV e parâmetros de estratégia e retorna um sinal de **BUY**, **SELL** ou **HOLD**.
-- `/backtest`: Realiza um backtest sobre os candles enviados e retorna a performance da estratégia com base nos sinais gerados.
+### 10. **`require_rsi_filter` (false)**:
+   - **Descrição**: Indica se o filtro do RSI deve ser aplicado. Se for **True**, o sinal de compra/venda será filtrado com base nos valores de **rsi_buy** e **rsi_sell**.
+   - **Exemplo**: Se for **True**, aplica o filtro RSI; se for **False**, o filtro não é aplicado.
+   - **Exemplo de Uso**:
+     - **Balanceado**: `require_rsi_filter = true`
+     - **Agressivo**: `require_rsi_filter = false`
 
-### Exemplos de uso:
+## Como Usar
 
-#### POST /signal
+### Executando Localmente
 
-Envia candles e parâmetros de estratégia para gerar um sinal em tempo real.
+1. Instale as dependências:
 
-#### POST /backtest
-
-Envia candles e parâmetros para realizar o backtest da estratégia.
-
-### Como Enviar Dados:
-
-O formato de entrada deve ser o seguinte:
-
-```json
-{
-    "T": [1622494800, 1622495100, 1622495400],
-    "O": ["100.50", "101.00", "100.80"],
-    "C": ["101.00", "100.90", "101.10"],
-    "H": ["101.50", "101.30", "101.20"],
-    "I": ["100.40", "100.60", "100.50"],
-    "V": ["1200", "1500", "1400"],
-    "params": { ... }
-}
-```
-
-Onde:
-- `T` é o timestamp.
-- `O` é o preço de abertura.
-- `C` é o preço de fechamento.
-- `H` é a máxima do período.
-- `I` é a mínima do período.
-- `V` é o volume.
-
-### Formato da Resposta:
-
-A resposta será uma estrutura com os detalhes do sinal gerado:
-
-```json
-{
-    "signal": "BUY",
-    "timestamp": 1622495100,
-    "iso_time": "2021-05-31T10:05:00Z",
-    "price": 101.10,
-    "reason": "Sinal baseado no crossover de EMAs.",
-    "take_profit": 102.50,
-    "stop_loss": 100.00,
-    "confidence": 85.0,
-    "future_signals": [
-        {
-            "signal": "BUY",
-            "timestamp": 1622495400,
-            "iso_time": "2021-05-31T10:10:00Z",
-            "confidence": 75.0
-        }
-    ]
-}
-```
-
-## Estratégia
-
-A estratégia de sinais utiliza indicadores técnicos para gerar sinais de compra, venda ou manutenção. A lógica é baseada em **crossover de EMAs** (Exponential Moving Averages) e outros filtros, como **RSI**, **MACD**, **Bollinger Bands**, **Stochastic Oscillator**, **CCI**, **ADX** e **Parabolic SAR**.
-
-### EMA Crossovers:
-- Sinal de **BUY** quando a **EMA rápida** cruza acima da **EMA lenta**; 
-- **SELL** quando ocorre o inverso.
-
-### RSI:
-- Se RSI for maior que um valor de venda ou menor que um valor de compra, o sinal é **HOLD**.
-
-### MACD:
-- Um crossover entre o **MACD** e sua linha de sinal.
-
-### Bollinger Bands:
-- Sinal de **BUY** quando o preço toca ou ultrapassa a **banda inferior** e começa a subir, e **SELL** quando o preço toca ou ultrapassa a **banda superior** e começa a cair.
-
-### Stochastic Oscillator:
-- Sinal de **BUY** quando o %K cruza acima do %D em uma zona de **sobrevenda** (<20) e **SELL** em uma zona de **sobrecompra** (>80).
-
-### CCI:
-- **BUY** quando o CCI cruza acima de 100 e **SELL** quando cruza abaixo de -100.
-
-### ADX:
-- Determina a força da tendência. **BUY** se o +DI for maior que o -DI e o **ADX** for maior que o limiar de 25. **SELL** se o -DI for maior que o +DI e o **ADX** for maior que 25.
-
-### Parabolic SAR:
-- O sinal de **BUY** ocorre quando o **SAR** está abaixo do preço e **SELL** quando está acima.
-
-## Perfis de Estratégia
-
-Os perfis são configurações prontas para ajustar o comportamento da estratégia para diferentes tipos de trader. Cada perfil ajusta a quantidade mínima de confirmações necessárias, o limiar do ADX e o horizonte futuro para sinais projetados.
-
-### Perfil Agressivo
-
-- `min_confirmations`: 1
-- `adx_threshold`: 20
-- `future_horizon_bars`: 15
-
-Ideal para traders que desejam sinais mais rápidos e frequentes, aceitando mais risco.
-
-### Perfil Balanceado
-
-- `min_confirmations`: 2
-- `adx_threshold`: 25
-- `future_horizon_bars`: 20
-
-Adequado para traders que buscam um equilíbrio entre rapidez e confiabilidade nos sinais.
-
-### Perfil Conservador
-
-- `min_confirmations`: 3
-- `adx_threshold`: 30
-- `future_horizon_bars`: 30
-
-Destinado a traders que priorizam a confiabilidade e estão dispostos a aceitar menos sinais, mas com maior precisão.
-
-## Explicação dos Parâmetros
-
-Aqui está uma explicação detalhada do que cada parâmetro faz e como afeta a estratégia:
-
-- `ema_fast (int)`: Período da EMA rápida. Controla a sensibilidade para detecção de movimentos rápidos.
-- `ema_slow (int)`: Período da EMA lenta. Controla a suavização para detecção de tendências de longo prazo.
-- `rsi_period (int)`: Período do RSI. Determina a quantidade de dados usados para calcular o RSI.
-- `rsi_buy (float)`: Valor abaixo do qual o RSI indica que o mercado está sobrevendido (potencial compra).
-- `rsi_sell (float)`: Valor acima do qual o RSI indica que o mercado está sobrecomprado (potencial venda).
-- `atr_period (int)`: Período do ATR (Average True Range), usado para calcular a volatilidade.
-- `atr_tp_mult (float)`: Multiplicador para calcular o Take Profit a partir da ATR.
-- `atr_sl_mult (float)`: Multiplicador para calcular o Stop Loss a partir da ATR.
-- `macd_fast, macd_slow, macd_signal (int)`: Períodos utilizados para o cálculo do MACD e sua linha de sinal.
-- `bb_period (int)`: Período para o cálculo das Bandas de Bollinger.
-- `bb_std_mult (float)`: Multiplicador do desvio padrão para as Bandas de Bollinger.
-- `stoch_k (int)`: Período para o cálculo da linha %K no Oscilador Estocástico.
-- `stoch_d (int)`: Período para o cálculo da linha %D no Oscilador Estocástico.
-- `cci_period (int)`: Período para o cálculo do CCI (Commodity Channel Index).
-- `adx_period (int)`: Período para o cálculo do ADX (Average Directional Index).
-- `adx_threshold (float)`: Limiar do ADX para considerar uma tendência forte.
-- `psar_step (float)`: Passo para o cálculo do Parabolic SAR.
-- `psar_max (float)`: Valor máximo para o Parabolic SAR.
-- `min_confirmations (int)`: Número mínimo de confirmações de diferentes indicadores necessários para gerar um sinal de BUY ou SELL.
-- `eval_max_bars (int)`: Número máximo de barras após o sinal para verificar se Take Profit (TP) ou Stop Loss (SL) foram atingidos.
-- `future_horizon_bars (int)`: Número de barras futuras a serem analisadas para projetar sinais.
-- `analog_min_score (int)`: Pontuação mínima de similaridade para considerar sinais futuros como válidos.
-- `future_top_k (int)`: Número máximo de sinais futuros projetados para serem retornados.
-
-## Dockerfile
-
-A aplicação já vem com um Dockerfile configurado para facilitar o uso em ambiente de produção. Ele utiliza o `python:3.9-slim` e o `uvicorn` para rodar a API.
-
-Para construir e rodar o Docker:
-
-```bash
-docker build -t trade-signal-api .
-docker run -p 8000:8000 trade-signal-api
-```
-
-Isso expõe a API na porta 8000.
+   ```bash
+   pip install -r requirements.txt
