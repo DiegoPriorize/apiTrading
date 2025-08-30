@@ -1,14 +1,20 @@
-# Simple production Dockerfile
-FROM python:3.11-slim
+# Use uma imagem base com Python
+FROM python:3.9-slim
 
+# Defina o diretório de trabalho no contêiner
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 
-COPY requirements.txt ./
+# Copie o arquivo requirements.txt para o contêiner
+COPY requirements.txt .
+
+# Instale as dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py ./
+# Copie todos os arquivos do projeto para o contêiner
+COPY . .
 
-EXPOSE 8080
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Exponha a porta da API
+EXPOSE 8000
+
+# Comando para rodar a aplicação FastAPI
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
