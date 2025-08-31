@@ -109,29 +109,31 @@ def atr(highs: List[float], lows: List[float], closes: List[float], period: int)
     return out
 
 def calcular_precision(candles: SignalRequest, signal: str, price: float, forecast_time: int) -> float:
-    timestamps_futuros = [c for c in candles.T if c > forecast_time]
+    # Certifique-se de que os timestamps são inteiros
+    timestamps_futuros = [int(c) for c in candles.T if int(c) > forecast_time]
+    
     precisao = 0.0
     if signal == "BUY":
         for ts in timestamps_futuros:
-            future_price = next((float(candles.C[i]) for i, t in enumerate(candles.T) if t == ts), None)
+            future_price = next((float(candles.C[i]) for i, t in enumerate(candles.T) if int(candles.T[i]) == ts), None)
             if future_price and future_price > price:
                 precisao += 1
     elif signal == "SELL":
         for ts in timestamps_futuros:
-            future_price = next((float(candles.C[i]) for i, t in enumerate(candles.T) if t == ts), None)
+            future_price = next((float(candles.C[i]) for i, t in enumerate(candles.T) if int(candles.T[i]) == ts), None)
             if future_price and future_price < price:
                 precisao += 1
     return precisao / len(timestamps_futuros) * 100 if timestamps_futuros else 0.0
 
 def generate_signal(candles: SignalRequest, params: StrategyParams) -> SignalResponse:
-    # Convertendo strings para floats
+    # Convertendo os valores de strings para float
     closes = [float(c) for c in candles.C]
     highs = [float(h) for h in candles.H]
     lows = [float(i) for i in candles.I]
     volumes = [float(v) for v in candles.V]
 
-    # Convertendo timestamps para inteiros
-    timestamps = [int(t) for t in candles.T]  # Convertendo os timestamps de strings para inteiros
+    # Convertendo os timestamps de strings para inteiros
+    timestamps = [int(t) for t in candles.T]
     
     ema_fast = ema(closes, params.ema_fast)
     ema_slow = ema(closes, params.ema_slow)
