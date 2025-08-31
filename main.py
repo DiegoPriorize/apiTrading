@@ -34,7 +34,7 @@ class SignalResponse(BaseModel):
     precision: Optional[float] = None
 
 class SignalRequest(BaseModel):
-    T: List[int]  # Timestamps
+    T: List[str]  # Timestamps
     O: List[str]  # Preço de Abertura (como strings)
     C: List[str]  # Preço de Fechamento (como strings)
     H: List[str]  # Máxima do Período (como strings)
@@ -129,18 +129,21 @@ def generate_signal(candles: SignalRequest, params: StrategyParams) -> SignalRes
     highs = [float(h) for h in candles.H]
     lows = [float(i) for i in candles.I]
     volumes = [float(v) for v in candles.V]
+
+    # Convertendo timestamps para inteiros
+    timestamps = [int(t) for t in candles.T]  # Convertendo os timestamps de strings para inteiros
     
     ema_fast = ema(closes, params.ema_fast)
     ema_slow = ema(closes, params.ema_slow)
     rsi_vals = rsi(closes, params.rsi_period)
     atr_vals = atr(highs, lows, closes, params.atr_period)
     
-    i = len(candles.T) - 1  # Último candle
+    i = len(timestamps) - 1  # Último candle
     if i < 1 or ema_fast[i] is None or ema_slow[i] is None:
         return SignalResponse(
             signal="HOLD",
-            timestamp=candles.T[i],
-            iso_time=datetime.utcfromtimestamp(candles.T[i]).isoformat() + "Z",
+            timestamp=timestamps[i],
+            iso_time=datetime.utcfromtimestamp(timestamps[i]).isoformat() + "Z",
             price=closes[i],
             reason="Insufficient data for EMA crossover."
         )
@@ -148,8 +151,8 @@ def generate_signal(candles: SignalRequest, params: StrategyParams) -> SignalRes
     if volumes[i] < params.min_volume:
         return SignalResponse(
             signal="HOLD",
-            timestamp=candles.T[i],
-            iso_time=datetime.utcfromtimestamp(candles.T[i]).isoformat() + "Z",
+            timestamp=timestamps[i],
+            iso_time=datetime.utcfromtimestamp(timestamps[i]).isoformat() + "Z",
             price=closes[i],
             reason=f"Volume {volumes[i]:.2f} < min_volume ({params.min_volume})."
         )
@@ -195,12 +198,12 @@ def generate_signal(candles: SignalRequest, params: StrategyParams) -> SignalRes
     reason = " ".join(reason_parts) if reason_parts else "Nenhum motivo específico."
     
     # Calcular precisão
-    precision = calcular_precision(candles, signal, closes[i], candles.T[i])
+    precision = calcular_precision(candles, signal, closes[i], timestamps[i])
     
     return SignalResponse(
         signal=signal,
-        timestamp=candles.T[i],
-        iso_time=datetime.utcfromtimestamp(candles.T[i]).isoformat() + "Z",
+        timestamp=timestamps[i],
+        iso_time=datetime.utcfromtimestamp(timestamps[i]).isoformat() + "Z",
         price=closes[i],
         reason=reason,
         take_profit=tp,
